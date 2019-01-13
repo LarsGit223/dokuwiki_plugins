@@ -11,4 +11,5 @@ $meta['use_browser_lang']  = array('onoff');
 $meta['start_redirect']    = array('onoff');
 $meta['skiptrans']         = array('string');
 $meta['about']             = array('string','_pattern' => '/^(|[\w:\-]+)$/');
+$meta['user_settings']     = array('');
 ?>

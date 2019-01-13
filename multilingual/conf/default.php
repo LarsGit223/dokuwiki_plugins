@@ -8,4 +8,5 @@ $conf['use_browser_lang'] =  true; // Check browser ui for language setting.
 $conf['start_redirect']   = false; // Redirect to the language start parge
 $conf['skiptrans']        = '';
 $conf['about']            = '';
+$conf['user_settings']    = '';
 

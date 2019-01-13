@@ -39,10 +39,8 @@ class action_plugin_multilingual extends DokuWiki_Action_Plugin {
     function register(&$controller) {
         if($this->getConf('start_redirect')) {
             $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'multilingual_start');
-	}
-        if($this->getConf('use_browser_lang')) {
-            $controller->register_hook('DOKUWIKI_STARTED', 'BEFORE', $this, 'multilingual_ui');
         }
+        $controller->register_hook('DOKUWIKI_STARTED', 'BEFORE', $this, 'multilingual_ui');
     }
 
     function multilingual_start($event, $args) {
@@ -63,25 +61,38 @@ class action_plugin_multilingual extends DokuWiki_Action_Plugin {
         global $ID;
         global $lang;
         global $conf;
-        
-	$enabled_languages = preg_split("/ /", $this->getConf('enabled_langs') );
-	$languages = preg_split("/,/", preg_replace('/\(;q=\d+\.\d+\)/i', '', getenv('HTTP_ACCEPT_LANGUAGE')));
-	// Could use a check here against the dokuwiki's supported languages
-	$old_language = $conf['lang'];
-	foreach ($languages as $language) {
-	    if (in_array($language, $enabled_languages)) {
-	        $conf['lang'] = $language;
-	        break;
-	    }
-	}
-	// Rebuild language array if necessary
-	if ( $old_language != $conf['lang'] ) {
-	    $lang = array();
-	    require_once(DOKU_INC.'inc/lang/en/lang.php');
-	    if ( $conf['lang'] && $conf['lang'] != 'en' ) {
-	        require_once(DOKU_INC.'inc/lang/'.$conf['lang'].'/lang.php');
-	    }
-	}
+        global $INFO;
+
+        $old_language = $conf['lang'];
+
+        $user_settings = $this->getConf('user_settings');
+        $pattern = '/'.$INFO['client'].'="(.*?)";/';
+        $rebuild = false;
+        if (preg_match($pattern, $user_settings, $matches) == 1) {
+            $options = explode(';', $matches[1]);
+            if (!empty($options[0])) {
+                dbglog('Plugin multilangual: changing language for user "'.$INFO['client'].'" to "'.$options[0].'"');
+                $conf['lang'] = $options[0];
+                $rebuild = true;
+            }
+        }
+        if ($rebuild == false && $this->getConf('use_browser_lang')) {
+            $enabled_languages = preg_split("/ /", $this->getConf('enabled_langs') );
+            $languages = preg_split("/,/", preg_replace('/\(;q=\d+\.\d+\)/i', '', getenv('HTTP_ACCEPT_LANGUAGE')));
+            // Could use a check here against the dokuwiki's supported languages
+            foreach ($languages as $language) {
+                if (in_array($language, $enabled_languages)) {
+                    $conf['lang'] = $language;
+                    break;
+                }
+            }
+        }
+        if ($rebuild == true) {
+            // Rebuild language array if necessary
+            if ( $old_language != $conf['lang'] ) {
+                init_lang($conf['lang']);
+            }
+        }
         return true;
     }
 }
